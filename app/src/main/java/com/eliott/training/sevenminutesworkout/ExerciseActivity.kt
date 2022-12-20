@@ -43,6 +43,7 @@ class ExerciseActivity : AppCompatActivity() {
 
     private fun setRestProgressBar() {
         binding?.progressbar?.progress = restProgress
+        binding?.tvUpcomingExerciseName?.text = exerciseList!![currentExercisePosition+1].getName()
         restTimer = object : CountDownTimer(10000, 1000) {
 
             override fun onTick(p0: Long) {
