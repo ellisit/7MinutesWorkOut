@@ -1,13 +1,20 @@
 package com.eliott.training.sevenminutesworkout
 
+import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.speech.tts.TextToSpeech
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.eliott.training.sevenminutesworkout.databinding.ActivityExerciseBinding
+import java.lang.Exception
+import java.util.*
+import kotlin.collections.ArrayList
 
-class ExerciseActivity : AppCompatActivity() {
+class ExerciseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var binding: ActivityExerciseBinding? = null
 
     private var restTimer: CountDownTimer? = null
@@ -18,6 +25,9 @@ class ExerciseActivity : AppCompatActivity() {
 
     private var exerciseList: ArrayList<ExerciseModel>? = null
     private var currentExercisePosition = -1
+
+    private var tts: TextToSpeech? = null
+    private var player: MediaPlayer? = null
 
 
 
@@ -33,6 +43,8 @@ class ExerciseActivity : AppCompatActivity() {
         }
 
         exerciseList = Constants.defaultExerciseList()
+
+        tts = TextToSpeech(this, this)
 
         binding?.toolbarExercise?.setNavigationOnClickListener() {
             onBackPressed()
@@ -90,6 +102,21 @@ class ExerciseActivity : AppCompatActivity() {
             restTimer?.cancel()
             restProgress = 0
         }
+
+        if (exerciseTimer != null) {
+            exerciseTimer?.cancel()
+            exerciseProgress = 0
+        }
+
+        if (tts!= null){
+            tts!!.stop()
+            tts!!.shutdown()
+        }
+
+        if (player!=null){
+            player!!.stop()
+        }
+
         binding = null
     }
 
@@ -108,12 +135,25 @@ class ExerciseActivity : AppCompatActivity() {
             exerciseProgress = 0
         }
 
+        speakOut(exerciseList!![currentExercisePosition].getName())
+
         binding?.ivImage?.setImageResource(exerciseList!![currentExercisePosition].getImage())
         binding?.tvExerciseName?.text = exerciseList!![currentExercisePosition].getName()
         setExerciseProgressBar()
     }
 
     private fun setupRestView() {
+
+        try {
+            val soundUri = Uri.parse(
+                "android.resource://com.eliott.training.seventminutesworkout/"
+                        + R.raw.press_start)
+            player = MediaPlayer.create(applicationContext, soundUri)
+            player?.isLooping = false
+            player?.start()
+        }catch (e: Exception){
+            e.printStackTrace()
+        }
 
         binding?.flRestView?.visibility = View.VISIBLE
         binding?.tvTitle?.visibility = View.VISIBLE
@@ -129,5 +169,21 @@ class ExerciseActivity : AppCompatActivity() {
         }
 
         setRestProgressBar()
+    }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS){
+            val result = tts!!.setLanguage(Locale.US) // because the model is in english
+            if (result == TextToSpeech.LANG_MISSING_DATA ||
+                    result == TextToSpeech.LANG_NOT_SUPPORTED){
+                Log.e("tts", "onInit: The Language specified is not supported" )
+            }
+        }else {
+            Log.e("tts", "onInit: Init failed" )
+        }
+    }
+
+    private fun speakOut(text: String){
+        tts!!.speak(text, TextToSpeech.QUEUE_FLUSH, null , "")
     }
 }
