@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.eliott.training.sevenminutesworkout.databinding.ActivityExerciseBinding
 import java.lang.Exception
 import java.util.*
@@ -29,6 +30,7 @@ class ExerciseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
     private var player: MediaPlayer? = null
 
+    private var exerciseAdapter: ExerciseStatusAdapter? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,11 +53,22 @@ class ExerciseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
         setupRestView()
+        setupExerciseStatusRecyclerView()
+    }
+
+    private fun setupExerciseStatusRecyclerView() {
+        binding?.rvExerciseStatus?.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+
+        exerciseAdapter = ExerciseStatusAdapter(exerciseList!!)
+        binding?.rvExerciseStatus?.adapter = exerciseAdapter
+
     }
 
     private fun setRestProgressBar() {
         binding?.progressbar?.progress = restProgress
-        binding?.tvUpcomingExerciseName?.text = exerciseList!![currentExercisePosition+1].getName()
+        binding?.tvUpcomingExerciseName?.text =
+            exerciseList!![currentExercisePosition + 1].getName()
         restTimer = object : CountDownTimer(10000, 1000) {
 
             override fun onTick(p0: Long) {
@@ -82,9 +95,9 @@ class ExerciseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
 
             override fun onFinish() {
-                if (currentExercisePosition < exerciseList?.size!! -1){
+                if (currentExercisePosition < exerciseList?.size!! - 1) {
                     setupRestView()
-                }else{
+                } else {
                     Toast.makeText(
                         this@ExerciseActivity,
                         "Congratulations! You have completed the 7 minutes workout.",
@@ -108,12 +121,12 @@ class ExerciseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             exerciseProgress = 0
         }
 
-        if (tts!= null){
+        if (tts != null) {
             tts!!.stop()
             tts!!.shutdown()
         }
 
-        if (player!=null){
+        if (player != null) {
             player!!.stop()
         }
 
@@ -147,11 +160,12 @@ class ExerciseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         try {
             val soundUri = Uri.parse(
                 "android.resource://com.eliott.training.seventminutesworkout/"
-                        + R.raw.press_start)
+                        + R.raw.press_start
+            )
             player = MediaPlayer.create(applicationContext, soundUri)
             player?.isLooping = false
             player?.start()
-        }catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
 
@@ -172,18 +186,19 @@ class ExerciseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS){
+        if (status == TextToSpeech.SUCCESS) {
             val result = tts!!.setLanguage(Locale.US) // because the model is in english
             if (result == TextToSpeech.LANG_MISSING_DATA ||
-                    result == TextToSpeech.LANG_NOT_SUPPORTED){
-                Log.e("tts", "onInit: The Language specified is not supported" )
+                result == TextToSpeech.LANG_NOT_SUPPORTED
+            ) {
+                Log.e("tts", "onInit: The Language specified is not supported")
             }
-        }else {
-            Log.e("tts", "onInit: Init failed" )
+        } else {
+            Log.e("tts", "onInit: Init failed")
         }
     }
 
-    private fun speakOut(text: String){
-        tts!!.speak(text, TextToSpeech.QUEUE_FLUSH, null , "")
+    private fun speakOut(text: String) {
+        tts!!.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
     }
 }
